@@ -1,0 +1,14 @@
+.Rhistory
+.Rproj.user
+*.Rproj
+ehthumbs.db
+Icon?
+.DS_Store
+Thumbs.db
+*.bak
+*.rds
+.httr-oauth
+.quarto
+data-raw/
+phenocause.Rcheck
+.ipynb_checkpoints

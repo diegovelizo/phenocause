@@ -1,0 +1,138 @@
+<!DOCTYPE html><html><head><title>R: Metadata for phenocause example genetic data</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css">
+<script type="text/javascript">
+const macros = { "\\R": "\\textsf{R}", "\\code": "\\texttt"};
+function processMathHTML() {
+    var l = document.getElementsByClassName('reqn');
+    for (let e of l) { katex.render(e.textContent, e, { throwOnError: false, macros }); }
+    return;
+}</script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"
+    onload="processMathHTML();"></script>
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body><div class="container"><main>
+
+<table style="width: 100%;"><tr><td>phenocause.metadata</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Metadata for phenocause example genetic data</h2>
+
+<h3>Description</h3>
+
+<p>A data frame containing metadata for the 5,000 simulated individuals. This documentation also provides the complete generation details for the associated genetic data, which is stored externally as GDS files.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class='language-R'>phenocause.metadata
+</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A <code>data.frame</code> with 5,000 rows and 22 columns:
+</p>
+
+<dl>
+<dt><code>sample.id</code></dt><dd><p>A unique identifier for each individual.</p>
+</dd>
+<dt><code>population</code></dt><dd><p>The simulated population label: Peruvian in Lima, Peru (PEL); Colombian in Medellin, Colombia (CLM); Mexican Ancestry in Los Angeles, California (MXL); Puerto Rican in Puerto Rico (PUR); Iberian in Spain (IBS); Yoruba in Ibadan, Nigeria (YRI); Han Chinese in Beijing, China (CHB); and individuals with Mexican ancestry from the 1000 Genomes Project (MXB).</p>
+</dd>
+<dt><code>PC1</code> to <code>PC20</code></dt><dd><p>The first 20 principal components of genetic variation.</p>
+</dd>
+</dl>
+
+
+
+<h3>Details</h3>
+
+<p>The associated genetic data was generated using a detailed pipeline to simulate realistic patterns of admixed ancestry. The principal components in this metadata object were calculated from that genetic data.
+</p>
+<p><strong>1. Simulation pipeline</strong>
+</p>
+<p>The raw DNA sequences and genealogies were simulated using <code>msprime</code> (Kelleher et al., 2016; Baumdicker et al., 2022). The resulting tree sequence data was exported to VCF format. These VCFs were then processed using <code>bcftools</code> and <code>PLINK</code> (Chang et al., 2015) to create a final, analysis-ready dataset containing only biallelic SNPs that passed quality control (MAF &gt;= 1% and LD pruning via <code style="white-space: pre;">&#8288;--indep-pairwise 500 50 0.2&#8288;</code>). Finally, the pruned VCF for each chromosome was converted to the GDS format using <code>SeqArray::seqVCF2GDS()</code>.
+</p>
+<p><strong>2. Msprime simulation parameters</strong>
+</p>
+
+<ul>
+<li> <p><strong>Sample composition</strong>: A total of 5,000 individuals were simulated from the 8 populations listed in the <code style="white-space: pre;">&#8288;@format&#8288;</code> section.
+</p>
+</li>
+<li> <p><strong>Demographic model</strong>: The simulation used the complex demographic model of admixed Latin American populations developed by Medina-Muñoz et al. (2023).
+</p>
+</li>
+<li> <p><strong>Recombination maps</strong>: The human recombination maps for chromosomes 20, 21, and 22 from genome build GRCh38 were used. To create a smaller example dataset, only the first one-third of each chromosome's genetic length (in cM) was simulated.
+</p>
+</li>
+<li> <p><strong>Coalescent model</strong>: The Discrete-Time Wright-Fisher (DTWF) model was used. This model was chosen over the standard Hudson model because it more accurately handles the large sample sizes and recent admixture events present in the demographic model, preventing known genealogical distortions (Bhaskar et al., 2014; Nelson et al., 2020).
+</p>
+</li>
+<li> <p><strong>Mutation model</strong>: A constant mutation rate of <code class="reqn">1.25 \times 10^{-8}</code> per base pair per generation was used, with the Jukes-Cantor (JC69) nucleotide substitution model (Jukes &amp; Cantor, 1969).
+</p>
+</li></ul>
+
+
+
+<h3>Associated Genetic Data</h3>
+
+<p>This metadata corresponds to the genetic data stored in three GDS files within the package. Their paths can be retrieved as follows:
+<code>example_gds_paths &lt;- system.file(paste0("extdata/example.chr", 1:3, ".gds"), package = "phenocause")</code>
+</p>
+
+
+<h3>References</h3>
+
+<p>Baumdicker, F. et al. Efficient ancestry and mutation simulation with msprime 1.0. Genetics 220, iyab229 (2022).
+</p>
+<p>Bhaskar, A., Wang, Y. X. &amp; Song, Y. S. Distortion of genealogical properties when the sample is very large. PNAS 111, 2361-2366 (2014).
+</p>
+<p>Chang, C. C. et al. Second-generation PLINK: rising to the challenge of larger and richer datasets. GigaScience 4, 7 (2015).
+</p>
+<p>Jukes, T. H. &amp; Cantor, C. R. Evolution of Protein Molecules. in Mammalian protein metabolism vol. 3 21–132 (Academic Press, New York, 1969).
+</p>
+<p>Kelleher, J., Etheridge, A. M. &amp; McVean, G. Efficient Coalescent Simulation and Genealogical Analysis for Large Sample Sizes. PLOS Comput. Biol. 12, e1004842 (2016).
+</p>
+<p>Medina-Muñoz, S. et al. Demographic modeling of admixed Latin American populations from whole genomes. Am J Hum Genet 110, 1503-1518 (2023).
+</p>
+<p>Nelson, D., Kelleher, J. &amp; Ragsdale, A. P. Accounting for long-range correlations in genome-wide simulations of large cohorts. PLOS Genet 16, e1008619 (2020).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>simulate_phenotype</code>, <code>sample_causal_sites</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class='language-R'># 1. Get paths to the associated GDS files
+gds_paths &lt;- system.file(
+  paste0("extdata/example.chr", 1:3, ".gds"),
+  package = "phenocause"
+)
+
+# 2. Open one GDS file to extract sample IDs
+gds &lt;- SeqArray::seqOpen(gds_paths[1])
+sample_ids_in_gds &lt;- SeqArray::seqGetData(gds, "sample.id")
+SeqArray::seqClose(gds)
+
+# 3. Load the metadata object
+data(phenocause.metadata)
+
+# 4. Print a small section of the metadata
+phenocause.metadata[1:6, 1:8]
+
+# 5. Test that the sample IDs in the metadata and GDS file match
+all_match &lt;- all(sort(phenocause.metadata$sample.id) == sort(sample_ids_in_gds))
+cat("Sample IDs in metadata and GDS file match:", all_match, "\n")
+
+</code></pre>
+
+</main>
+
+</div>
+</body></html>

@@ -1,0 +1,31 @@
+Package: phenocause
+Title: Phenotype Simulation under Complex Confounding Scenarios
+Version: 0.1.0
+Authors@R: 
+    person(given = "Diego",
+           family = "Veliz-Otani",
+           email = "your.email@example.com",
+           role = c("aut", "cre"))
+Description: Provides functions to simulate polygenic quantitative and binary traits with three different modes of 
+    confounding.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: 
+    R (>= 3.5)
+LazyData: true
+Imports:
+    data.table,
+    dplyr,
+    glue,
+    gdsfmt,
+    SeqArray,
+    SeqVarTools,
+    GENESIS,
+    argparse
+Suggests:
+    ggplot2,
+    patchwork
+
+
