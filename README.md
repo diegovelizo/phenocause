@@ -167,8 +167,7 @@ primary advantages are:
 
 - **Memory Management:** The entire dataset does not need to be loaded
   into memory. Instead, a connection is opened to the file on disk, and
-  only the requested data slices are read. This is critical for
-  biobank-scale datasets.
+  only the requested data slices are read.
 
 - **On-Disk Filtering:** Filters (e.g., by minor allele count,
   missingness or sample ID) can be applied to the file connection
@@ -177,9 +176,9 @@ primary advantages are:
 
 ### Obtaining GDS files
 
-This package is shipped with example GDS files that can be used to
-follow the tutorial. The paths on your system can be retrieved with the
-following command:
+This package includes example GDS files that can be used to follow the
+tutorial. The paths on your system can be retrieved with the following
+command:
 
 ``` r
 gds_paths <- system.file(

@@ -108,13 +108,13 @@ The package is designed to operate on genotype data stored in GDS files. GDS fil
   
 * **Efficiency:** Data is stored in on-disk chunks, allowing for much faster access to specific variants or samples compared to parsing a text-based VCF file.  
  
-* **Memory Management:** The entire dataset does not need to be loaded into memory. Instead, a connection is opened to the file on disk, and only the requested data slices are read. This is critical for biobank-scale datasets.  
+* **Memory Management:** The entire dataset does not need to be loaded into memory. Instead, a connection is opened to the file on disk, and only the requested data slices are read.  
   
 * **On-Disk Filtering:** Filters (e.g., by minor allele count, missingness or sample ID) can be applied to the file connection itself, before loading the data, ensuring that subsequent operations only process the subset of data that meets the specified criteria.  
   
 ### Obtaining GDS files  
 
-This package is shipped with example GDS files that can be used to follow the tutorial. The paths on your system can be retrieved with the following command:
+This package includes example GDS files that can be used to follow the tutorial. The paths on your system can be retrieved with the following command:
 
 ```{r get-example-gds-paths}
 gds_paths <- system.file(
