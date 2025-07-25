@@ -87,7 +87,7 @@ For binary (case/control) outcomes, the quantitative trait $Y$ is treated as an 
 
 ## Installation
 
-You can install `phenocause` from GitHub using `devtools`.
+You can install `phenocause` from GitHub using `devtools`.  
 
 ```{r installation-example, eval=FALSE}
 if (!require("devtools")) install.packages("devtools")
