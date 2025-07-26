@@ -6,8 +6,8 @@ genetic basis of a complex trait from the effects of environmental and
 social factors, especially when those factors are correlated with
 genetic ancestry or the true polygenic score. `phenocause` is a
 simulation toolkit designed to address this problem by allowing
-researchers to simulate phenotypes where the contributions of genetics,
-population structure, and different types of confounding can be
+researchers to simulate phenotypes where the contributions of genetics
+and different types of confounding can be
 explicitly and precisely controlled. The package implements a two-step
 workflow: first, sampling a set of causal variants to define a trait’s
 genetic architecture, and second, simulating a final phenotype based on
