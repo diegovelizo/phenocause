@@ -2,7 +2,7 @@
 % Please edit documentation in R/sample_causal_sites.R
 \name{sample_causal_sites}
 \alias{sample_causal_sites}
-\title{Sample Causal Genetic Variants}
+\title{Sample causal genetic variants}
 \usage{
 sample_causal_sites(
   gds_paths,
@@ -14,7 +14,10 @@ sample_causal_sites(
   weights_power = 1,
   missingness_threshold = NULL,
   mac_threshold = NULL,
-  n_threads = 1
+  n_threads = 1,
+  pca_matrix = NULL,
+  collider_r2_candidate_threshold = 0.975,
+  collider_r2_control_threshold = 0.025
 )
 }
 \arguments{
@@ -43,23 +46,35 @@ See \code{ldak_chrs} for how chromosome information is handled for 2-column file
 \item{mac_threshold}{A positive integer. Variants with a minor allele count (MAC) less than this threshold will be excluded before sampling. Default is \code{NULL}.}
 
 \item{n_threads}{A positive integer specifying the number of threads for parallel operations on GDS files. Default is 1.}
+
+\item{pca_matrix}{A data frame or matrix containing principal components for all samples. The first column must be named \code{sample.id} (case-insensitive), and all subsequent columns must contain the PC scores (e.g., \code{PC1}, \code{PC2}, ...). Providing this argument activates the \code{collider} sampling mode.}
+
+\item{collider_r2_candidate_threshold}{A numeric quantile between 0 and 1. In \code{collider} mode, variants with an R² value above this quantile within their MAF stratum are considered candidates for being causal. Default is \code{0.975}.}
+
+\item{collider_r2_control_threshold}{A numeric quantile between 0 and 1. In \code{collider} mode, variants with an R² value below this quantile are selected as a negative control set. Default is \code{0.025}.}
 }
 \value{
-A list containing two data frames:
+For \code{uniform}, \code{custom_weights}, and \code{ldak_weights} modes, a list containing two data frames:
 \describe{
 \item{\code{causal_annotation}}{A data frame with annotations for each of the \code{n_causal_sites} sampled variants.}
 \item{\code{causal_genotypes}}{A data frame with \code{n_causal_sites} rows and \code{(k + N)} columns, where \code{k} is the number of annotation columns and \code{N} is the number of samples. It contains the genotypes and annotations for the causal variants.}
 }
+For \code{collider} mode, the return value is a list containing two elements, where the first element is a nested list:
+\describe{
+\item{\code{annotations}}{A list containing three data frames of annotations: \code{causal_sites} (variants sampled to be causal), \code{non_selected_candidates} (other high-R² variants not chosen), and \code{control_sites} (low-R² variants).}
+\item{\code{causal_genotypes}}{The genotype data frame for only the \code{causal_sites}.}
+}
 }
 \description{
-Samples a specified number of causal variants from a set of GDS files. The function operates in one of three modes: uniform sampling, or weighted sampling based on LDAK or custom user-provided weights. It can filter sites by missingness or minor allele count (MAC) before sampling and returns the genotypes and annotations of the selected variants.
+Samples a specified number of causal variants from a set of GDS files. The function operates in one of several modes: uniform sampling, weighted sampling based on LDAK or custom user-provided weights, or a special mode to select variants based on their correlation with principal components to study collider bias. It can filter sites by missingness or minor allele count (MAC) before sampling and returns the genotypes and annotations of the selected variants.
 }
 \details{
 The sampling mode is determined automatically based on the provided arguments:
 \itemize{
-\item \strong{uniform}: Default mode. Triggered if neither \code{ldak_ld_weights_paths} nor \code{sampling_weights_paths} is provided. Variants are sampled uniformly at random from the pool of available sites after filtering.
-\item \strong{ldak_weights}: Triggered by providing paths in \code{ldak_ld_weights_paths}. Requires chromosome information to be provided either within the files or via the \code{ldak_chrs} parameter.
-\item \strong{custom_weights}: Triggered by providing paths in \code{sampling_weights_paths}. Variants are sampled according to user-defined weights from files containing mandatory \code{chr}, \code{pos}, and \code{weight} columns.
+\item \strong{uniform}: Default mode. Triggered if no weight files or PCA matrix are provided. Variants are sampled uniformly at random from the pool of available sites after filtering.
+\item \strong{ldak_weights}: Triggered by providing paths in \code{ldak_ld_weights_paths}. Variants are sampled using weights from LDAK software.
+\item \strong{custom_weights}: Triggered by providing paths in \code{sampling_weights_paths}. Variants are sampled according to user-defined weights.
+\item \strong{collider}: Triggered by providing a \code{pca_matrix}. This mode first calculates the squared multiple correlation (R^2) between each variant and the provided principal components (PCs). It then stratifies variants by minor allele frequency (MAF) and selects causal variants exclusively from either the pool of variants with high or low R^2 values within each MAF tranche. Including PCs in an linear model where the sites in the high R^2 set ("structured sites") are causal is expected to induce collider bias (See Grinde et al. ).  The low R^2 set ("non-structured sites") can serve as a benchmarking control.
 }
 The function robustly handles cases where the number of GDS files and weight files do not match, under the condition that one of the inputs is a single, consolidated file (e.g., one GDS file for all chromosomes, or one weight file for all chromosomes).
 
@@ -126,9 +141,9 @@ cat("OK: Custom weighted sampling returned the correct number of sites.\n")
 file.remove(tmp_custom_files)
 
 ##================================================================
-## Example 3: Weighted sampling using LDAK weights and the `ldak_chrs` parameter
+## Example 3: Weighted sampling using LDAK weights
 ##================================================================
-cat(">>> Running Example 3: LDAK Weights from R Object")
+cat(">>> Running Example 3: LDAK Weights from R Object\n")
 data(phenocause.ldak_weights)
 temp_dir <- tempdir()
 # Create standard 2-column LDAK weight files (no header)
@@ -141,17 +156,57 @@ temp_ldak_paths <- sapply(names(phenocause.ldak_weights), function(chr_name) {
   return(file_path)
 })
 
-n_causal_ldak <- 300
-# Since the files have no 'chr' column, we must supply it via `ldak_chrs`
+# Here, we infer chromosomes from the matched GDS file list
+# so `ldak_chrs` is not needed.
 ldak_sites <- sample_causal_sites(
   gds_paths = gds_paths,
-  n_causal_sites = n_causal_ldak,
+  n_causal_sites = 300,
   ldak_ld_weights_paths = temp_ldak_paths,
-  ldak_chrs = c("1", "2", "3"), # Must correspond to the files
   n_threads = 2
 )
-stopifnot(nrow(ldak_sites$causal_genotypes) == n_causal_ldak)
+stopifnot(nrow(ldak_sites$causal_genotypes) == 300)
 cat("OK: LDAK weighted sampling returned the correct number of sites.\n")
 file.remove(temp_ldak_paths)
+
+##================================================================
+## Example 4: Collider mode sampling
+##================================================================
+cat(">>> Running Example 4: Collider Mode Sampling\n")
+# Goal: Select causal variants that are either highly or weakly correlated with PCs
+# The set with high R^2 ("structured sites") are expected to induce collider bias.
+# The set with low R^2 ("non structured sites") can serve as a benchmarking control.
+
+# 1. Load metadata containing pre-computed PCs
+data(phenocause.metadata)
+pca_matrix <- phenocause.metadata[, c("sample.id", paste0("PC", 1:10))]
+n_causal <- 50
+# 2. Run sampling in collider mode
+collider_sites <- sample_causal_sites(
+  gds_paths = gds_paths,
+  n_causal_sites = n_causal,
+  mac_threshold=20,
+  missingness_threshold = 0.02,
+  pca_matrix = pca_matrix,
+  collider_r2_control_threshold = 0.025, ## Sites with in the lowest 2.5\% will be returned as controls (no collider bias)
+  collider_r2_candidate_threshold = 0.975,  ## sites in the top 2.5\% will be used as candidates for the causal sites.
+  n_threads = 2
+)
+
+# 3. Validate the selection by comparing R^2 summaries
+cat("\nSummary of R^2 for structured causal sites  (high R^2 set):\n")
+summary(collider_sites$annotations$causal_structured$r2)
+
+cat("\nSummary of R^2 for non-structured causal sites (low R^2 set):\n")
+summary(collider_sites$annotations$causal_non_structured$r2)
+
+# 4. Make sure differences in R^2 are not due to differences in MAF: 
+cat("\nSummary of MAF for structured causal sites (high R^2 set):\n")
+summary(collider_sites$annotations$causal_structured$maf)
+
+cat("\nSummary of MAF for non-structured causal sites (low R^2 set):\n")
+summary(collider_sites$annotations$causal_non_structured$maf)
+
+stopifnot(nrow(collider_sites$genotypes$causal_structured) == n_causal || nrow(collider_sites$genotypes$causal_non_structured) == n_causal )
+cat("\nOK: Collider mode sampling returned the correct number of sites and pools.\n")
 }
 }
